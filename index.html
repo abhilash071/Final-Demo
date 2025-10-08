@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Single-file Shop — Demo</title>
+  <meta name="description" content="Single-file modern responsive e-commerce demo — Home, Products, Product Details, Checkout, About, Contact, Thank You." />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Favicon placeholder (emoji data URI) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='24' font-size='24'%3E%F0%9F%8D%BA%3C/text%3E%3C/svg%3E">
+  <style>
+    /* =========
+       Base — mobile-first
+       ========= */
+    :root{
+      --bg:#fbfbff;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --accent:#6c5ce7; /* purple accent */
+      --accent-2:#00b894; /* green */
+      --shadow: 0 6px 20px rgba(20,20,50,0.07);
+      --radius:14px;
+      --container:1100px;
+      --maxwidth:1024px;
+      --focus: 3px solid rgba(108,92,231,0.15);
+      --transition: 240ms cubic-bezier(.2,.9,.3,1);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#fbfbff 0%, #f5f7ff 100%);
+      color:#0f172a;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      line-height:1.45;
+      padding-bottom:40px;
+    }
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+
+    /* Skip link */
+    .skip-link{
+      position: absolute;
+      left:-999px;
+      top:auto;
+      width:1px;height:1px;
+      overflow:hidden;
+    }
+    .skip-link:focus{
+      left:12px;top:12px;width:auto;height:auto;padding:8px 12px;border-radius:8px;background:var(--accent);color:white;z-index:9999;
+    }
+
+    /* Container */
+    .wrap{max-width:var(--container);margin:18px auto;padding:0 16px}
+
+    /* Header */
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;margin-bottom:18px;
+    }
+    .brand{
+      display:flex;align-items:center;gap:10px;
+      font-weight:700;font-size:18px;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#4b71f2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;box-shadow:var(--shadow);
+    }
+    nav{display:flex;gap:10px;align-items:center}
+    .nav-link{
+      padding:8px 12px;border-radius:10px;font-weight:600;color:var(--muted);
+    }
+    .nav-link[aria-current="page"]{background:rgba(108,92,231,0.08);color:var(--accent)}
+    .actions{display:flex;gap:8px;align-items:center}
+
+    /* Search */
+    .search{
+      display:flex;align-items:center;background:var(--card);padding:8px;border-radius:10px;box-shadow:var(--shadow);
+    }
+    .search input{border:0;outline:0;font-size:14px;padding:6px 8px;background:transparent}
+
+    /* Cart badge */
+    .cart-btn{position:relative;padding:8px 10px;border-radius:10px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px}
+    .badge{
+      position:absolute;right:-6px;top:-6px;background:var(--accent-2);color:white;border-radius:999px;padding:3px 6px;font-size:12px;font-weight:700;
+    }
+
+    /* Hero */
+    .hero{
+      background:linear-gradient(90deg, rgba(108,92,231,0.08), rgba(0,184,148,0.03));
+      padding:28px;border-radius:var(--radius);box-shadow:var(--shadow);display:flex;gap:16px;align-items:center;
+      flex-direction:column;
+    }
+    .hero h1{font-size:22px;margin:0}
+    .hero p{margin:8px 0;color:var(--muted)}
+
+    /* Grid for featured and products */
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    @media(min-width:720px){ .grid{grid-template-columns:repeat(3,1fr)} }
+    @media(min-width:980px){ .grid{grid-template-columns:repeat(4,1fr)} }
+
+    /* Product card */
+    .card{
+      background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);transition:transform var(--transition),box-shadow var(--transition);
+      display:flex;flex-direction:column;gap:8px;
+    }
+    .card:hover{transform:translateY(-6px)}
+    .card figure{margin:0;border-radius:10px;overflow:hidden}
+    .card h3{font-size:15px;margin:0}
+    .meta{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-weight:600}
+    .price{font-weight:800;color:var(--accent)}
+
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:0;background:var(--accent);color:white;font-weight:700;cursor:pointer;transition:transform var(--transition);
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(108,92,231,0.12);font-weight:700}
+
+    /* Small utilities */
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .center{display:flex;align-items:center;justify-content:center}
+
+    /* Section show/hide with fade */
+    section.page{display:none;opacity:0;transform:translateY(10px);transition:opacity 220ms,var(--transition);min-height:200px}
+    section.page.active{display:block;opacity:1;transform:none}
+
+    /* Product details layout */
+    .product-details{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:880px){ .product-details{grid-template-columns:1fr 360px} }
+    .pd-image{border-radius:12px;overflow:hidden}
+    .pd-info{display:flex;flex-direction:column;gap:12px}
+    .specs{background:#f8fafc;padding:12px;border-radius:10px}
+
+    /* Forms */
+    form{display:flex;flex-direction:column;gap:10px}
+    label{font-weight:700;font-size:13px}
+    input[type="text"], input[type="email"], textarea, select{
+      padding:10px;border-radius:10px;border:1px solid #e6e9f2;background:white;outline:0;font-size:14px;
+    }
+    input:focus,textarea:focus,select:focus{box-shadow:var(--focus);border-color:rgba(108,92,231,0.2)}
+    .error{color:#e03131;font-weight:700;font-size:13px}
+    .form-row{display:flex;gap:8px;flex-direction:column}
+    @media(min-width:720px){ .form-row.row-2{flex-direction:row} }
+
+    /* Footer */
+    footer{margin-top:28px;padding:18px;border-radius:12px;background:var(--card);box-shadow:var(--shadow);text-align:center;color:var(--muted)}
+    small{color:var(--muted)}
+
+    /* Focus outlines for keyboard */
+    .nav-link:focus, .btn:focus, a:focus {outline:var(--focus);outline-offset:3px;border-radius:8px}
+
+    /* Tiny responsive tweaks */
+    @media(min-width:720px){
+      header{align-items:center}
+      .hero{flex-direction:row;justify-content:space-between}
+    }
+  </style>
+</head>
+<body>
+  <!-- Accessibility: Skip to content -->
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <div class="wrap" role="application" aria-label="Single file shop app">
+    <!-- Header -->
+    <header role="banner" aria-label="Top navigation">
+      <div class="brand" tabindex="0">
+        <div class="logo" aria-hidden="true">🍪</div>
+        <div>
+          <div>CookieCart</div>
+          <small class="muted">tiny demo shop</small>
+        </div>
+      </div>
+
+      <nav role="navigation" aria-label="Primary" id="primary-nav">
+        <a class="nav-link" href="#home" data-route="home">Home</a>
+        <a class="nav-link" href="#products" data-route="products">Products</a>
+        <a class="nav-link" href="#about" data-route="about">About</a>
+        <a class="nav-link" href="#contact" data-route="contact">Contact</a>
+      </nav>
+
+      <div class="actions" aria-hidden="false">
+        <div class="search" role="search" aria-label="Search products">
+          <input id="search-input" type="search" placeholder="Search products or tags..." aria-label="Search products"/>
+        </div>
+        <button class="cart-btn" id="cart-btn" aria-label="Open cart (0 items)" title="Open cart">
+          🛒 <span id="cart-count" class="badge" aria-hidden="true">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main content area -->
+    <main id="main" tabindex="-1">
+      <!-- Home -->
+      <section id="home" class="page active" role="region" aria-labelledby="home-title">
+        <div class="hero" aria-hidden="false">
+          <div>
+            <h1 id="home-title">Freshly baked UI — single file shop</h1>
+            <p>Small demo store built in one HTML file. Client-side routing, cart persisted in localStorage, accessible forms, and smooth transitions.</p>
+            <div class="row">
+              <a class="btn" href="#products" role="button">Browse Products</a>
+              <button class="btn ghost" id="learn-more">How it works</button>
+            </div>
+          </div>
+          <div style="min-width:200px;text-align:center">
+            <img src="https://picsum.photos/seed/cookie/420/260" alt="Hero product image" style="border-radius:10px;max-width:320px" loading="lazy"/>
+          </div>
+        </div>
+
+        <h2 style="margin-top:18px">Featured products</h2>
+        <div id="featured" class="grid" aria-live="polite"></div>
+      </section>
+
+      <!-- Products -->
+      <section id="products" class="page" role="region" aria-labelledby="products-title">
+        <h2 id="products-title">Products</h2>
+        <div class="row" style="margin-bottom:12px;justify-content:space-between;align-items:center">
+          <div class="muted">Click a product to open details</div>
+          <div class="row">
+            <label for="sort" class="muted">Sort:</label>
+            <select id="sort" aria-label="Sort products">
+              <option value="default">Featured</option>
+              <option value="low">Price: low → high</option>
+              <option value="high">Price: high → low</option>
+            </select>
+          </div>
+        </div>
+        <div id="products-grid" class="grid" aria-live="polite"></div>
+      </section>
+
+      <!-- Product details (dynamic) -->
+      <section id="product-details" class="page" role="region" aria-labelledby="pd-title">
+        <h2 id="pd-title">Product</h2>
+        <div class="product-details" id="pd-content" aria-live="polite"></div>
+      </section>
+
+      <!-- Checkout -->
+      <section id="checkout" class="page" role="region" aria-labelledby="checkout-title">
+        <h2 id="checkout-title">Checkout</h2>
+        <div class="card">
+          <form id="checkout-form" novalidate>
+            <div class="form-row row-2">
+              <div>
+                <label for="c-name">Full name</label>
+                <input id="c-name" name="name" type="text" required aria-required="true" />
+                <div class="error" id="err-name" aria-live="polite"></div>
+              </div>
+              <div>
+                <label for="c-email">Email</label>
+                <input id="c-email" name="email" type="email" required aria-required="true" />
+                <div class="error" id="err-email" aria-live="polite"></div>
+              </div>
+            </div>
+
+            <div>
+              <label for="c-address">Address</label>
+              <textarea id="c-address" name="address" rows="3" required aria-required="true"></textarea>
+              <div class="error" id="err-address" aria-live="polite"></div>
+            </div>
+
+            <div>
+              <label for="payment">Payment method</label>
+              <select id="payment" required aria-required="true">
+                <option value="">Select (placeholder)</option>
+                <option value="card">Credit / Debit card</option>
+                <option value="upi">UPI / Wallet</option>
+                <option value="cod">Cash on delivery</option>
+              </select>
+              <div class="error" id="err-payment" aria-live="polite"></div>
+            </div>
+
+            <div class="specs" id="checkout-summary" aria-live="polite"></div>
+
+            <div class="row" style="justify-content:flex-end">
+              <button type="submit" class="btn">Place order</button>
+              <button type="button" class="btn ghost" id="checkout-cancel">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section id="about" class="page" role="region" aria-labelledby="about-title">
+        <h2 id="about-title">About CookieCart</h2>
+        <div class="card">
+          <p class="muted">We build tiny demos and teach client-side patterns. CookieCart is a learning project demonstrating routing, accessibility, forms, and small e-commerce flows — all in a single HTML file.</p>
+          <h3>Team</h3>
+          <div class="grid">
+            <div class="card">
+              <h3>Priya — Founder</h3>
+              <div class="muted">Product & design</div>
+            </div>
+            <div class="card">
+              <h3>Arjun — Engineer</h3>
+              <div class="muted">Frontend & architecture</div>
+            </div>
+            <div class="card">
+              <h3>Sam — Support</h3>
+              <div class="muted">Community & docs</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact -->
+      <section id="contact" class="page" role="region" aria-labelledby="contact-title">
+        <h2 id="contact-title">Contact</h2>
+        <div class="card">
+          <form id="contact-form" novalidate>
+            <label for="ct-name">Your name</label>
+            <input id="ct-name" type="text" required aria-required="true"/>
+            <div class="error" id="ct-name-err"></div>
+
+            <label for="ct-email">Email</label>
+            <input id="ct-email" type="email" required aria-required="true"/>
+            <div class="error" id="ct-email-err"></div>
+
+            <label for="ct-message">Message</label>
+            <textarea id="ct-message" rows="4" required aria-required="true"></textarea>
+            <div class="error" id="ct-message-err"></div>
+
+            <div class="row" style="justify-content:flex-end">
+              <button class="btn" type="submit">Send message</button>
+            </div>
+            <div id="contact-success" aria-live="polite"></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Thank you -->
+      <section id="thankyou" class="page" role="region" aria-labelledby="ty-title">
+        <h2 id="ty-title">Thank you!</h2>
+        <div class="card center" style="flex-direction:column;gap:12px">
+          <div style="font-size:36px">🎉</div>
+          <div>
+            <p>We received your order. A confirmation has been sent to your email (demo).</p>
+            <div id="ty-order" class="muted"></div>
+            <a class="btn" href="#home">Back to Home</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer role="contentinfo">
+      <small>© <span id="year"></span> CookieCart · Demo project · No real purchases</small>
+    </footer>
+  </div>
+
+  <script>
+    /****************************************
+     * Single-file shop — Vanilla JS
+     * - Hash routing
+     * - Product dataset
+     * - Product details via #product-<id>
+     * - Cart stored in localStorage
+     * - Search & sort
+     * - Simple analytics stub trackEvent()
+     ****************************************/
+
+    // ---------- Analytics stub ----------
+    function trackEvent(eventName, data = {}) {
+      // Replace with real analytics SDK call in production
+      console.info("[trackEvent]", eventName, JSON.parse(JSON.stringify(data)));
+    }
+
+    // ---------- Data: small product dataset ----------
+    const PRODUCTS = [
+      {
+        id: 1,
+        name: "Classic Chocolate Cookie",
+        price: 149,
+        short: "Rich chocolate cookie with chips",
+        long: "A buttery, chocolate-packed cookie with chunks of dark chocolate and a soft center.",
+        image: "https://picsum.photos/seed/cookie1/600/420",
+        tags: ["chocolate", "bestseller"]
+      },
+      {
+        id: 2,
+        name: "Oat & Honey Cookie",
+        price: 129,
+        short: "Wholesome oats and sticky honey",
+        long: "Crunchy yet tender oat cookie sweetened with natural honey — a healthier treat.",
+        image: "https://picsum.photos/seed/cookie2/600/420",
+        tags: ["oat", "healthy"]
+      },
+      {
+        id: 3,
+        name: "Peanut Butter Dream",
+        price: 159,
+        short: "Creamy peanut butter center",
+        long: "Peanut butter cookie with a melt-in-the-mouth center and roasted peanut crunch.",
+        image: "https://picsum.photos/seed/cookie3/600/420",
+        tags: ["peanut", "new"]
+      },
+      {
+        id: 4,
+        name: "Lemon Zest Cookie",
+        price: 139,
+        short: "Zesty lemon, bright and fresh",
+        long: "A light, citrus cookie balanced with a soft crumb and a hint of vanilla.",
+        image: "https://picsum.photos/seed/cookie4/600/420",
+        tags: ["lemon", "refreshing"]
+      },
+      {
+        id: 5,
+        name: "Double Chocolate Deluxe",
+        price: 189,
+        short: "Intense double-chocolate treat",
+        long: "Chocolate cookie for chocoholics — cocoa in the dough plus chips throughout.",
+        image: "https://picsum.photos/seed/cookie5/600/420",
+        tags: ["chocolate", "premium"]
+      },
+      {
+        id: 6,
+        name: "Cranberry & Almond",
+        price: 149,
+        short: "Tangy cranberries and toasted almonds",
+        long: "Balanced tartness from cranberries meets nutty texture from roasted almonds.",
+        image: "https://picsum.photos/seed/cookie6/600/420",
+        tags: ["nuts", "seasonal"]
+      }
+    ];
+
+    // ---------- Utilities ----------
+    const query = (sel, root = document) => root.querySelector(sel);
+    const queryAll = (sel, root = document) => Array.from((root || document).querySelectorAll(sel));
+
+    // ---------- DOM nodes ----------
+    const pages = queryAll("section.page");
+    const navLinks = queryAll("nav .nav-link");
+    const productsGrid = query("#products-grid");
+    const featuredGrid = query("#featured");
+    const pdContent = query("#pd-content");
+    const cartCountEl = query("#cart-count");
+    const cartBtn = query("#cart-btn");
+    const searchInput = query("#search-input");
+    const sortSelect = query("#sort");
+    const checkoutSummary = query("#checkout-summary");
+    const yearEl = query("#year");
+
+    yearEl.textContent = new Date().getFullYear();
+
+    // ---------- Cart (localStorage) ----------
+    const CART_KEY = "cookiecart_cart_v1";
+    function readCart(){
+      try{
+        const raw = localStorage.getItem(CART_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch(e){ return {}; }
+    }
+    function saveCart(cart){
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+      updateCartCount();
+    }
+    function addToCart(productId, qty = 1){
+      const cart = readCart();
+      cart[productId] = (cart[productId] || 0) + qty;
+      saveCart(cart);
+      trackEvent("add_to_cart", { productId, qty });
+    }
+    function clearCart(){
+      localStorage.removeItem(CART_KEY);
+      updateCartCount();
+    }
+    function updateCartCount(){
+      const cart = readCart();
+      const total = Object.values(cart).reduce((s,n)=>s+(Number(n)||0),0);
+      cartCountEl.textContent = total;
+      cartBtn.setAttribute("aria-label", `Open cart (${total} items)`);
+    }
+
+    // ---------- Render helpers ----------
+    function currency(n){ return "₹" + Number(n).toFixed(0); }
+
+    // Render a product card (used in grids)
+    function renderCard(p){
+      const div = document.createElement("article");
+      div.className = "card";
+      div.setAttribute("tabindex","0");
+      div.innerHTML = `
+        <figure class="card-image">
+          <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" width="420" height="280"/>
+        </figure>
+        <div>
+          <h3>${escapeHtml(p.name)}</h3>
+          <div class="meta">
+            <div class="muted">${escapeHtml(p.short)}</div>
+            <div class="price">${currency(p.price)}</div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px;justify-content:space-between">
+          <div class="row">
+            <button class="btn btn-details" data-id="${p.id}">View</button>
+            <button class="btn ghost btn-add" data-id="${p.id}">Add</button>
+          </div>
+          <div class="muted" style="font-size:13px">${p.tags.map(t=>`#${t}`).join(" ")}</div>
+        </div>
+      `;
+      // keyboard: Enter opens details
+      div.addEventListener("keydown", (e)=>{
+        if(e.key === "Enter") {
+          openProduct(p.id);
+        }
+      });
+      return div;
+    }
+
+    // Escape helper for safety in this demo
+    function escapeHtml(s = "") {
+      return String(s).replace(/[&<>"']/g, function(m){
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
+      });
+    }
+
+    // ---------- Populate product lists ----------
+    function populateGrids(list = PRODUCTS){
+      // featured: first 4
+      featuredGrid.innerHTML = "";
+      productsGrid.innerHTML = "";
+      const featured = list.slice(0,4);
+      for(const p of featured) featuredGrid.appendChild(renderCard(p));
+      for(const p of list) productsGrid.appendChild(renderCard(p));
+    }
+
+    // ---------- Product details ----------
+    function openProduct(id, pushHash = true){
+      const pid = Number(id);
+      const prod = PRODUCTS.find(x => x.id === pid);
+      if(!prod) return navigateTo("products");
+      // Build details markup
+      pdContent.innerHTML = `
+        <div>
+          <div class="pd-image card">
+            <img src="${prod.image}" alt="${escapeHtml(prod.name)}" loading="lazy"/>
+          </div>
+        </div>
+        <div class="pd-info">
+          <div>
+            <h2>${escapeHtml(prod.name)}</h2>
+            <div class="muted">${escapeHtml(prod.short)}</div>
+            <div style="margin-top:8px;font-size:18px" class="price">${currency(prod.price)}</div>
+          </div>
+          <div>
+            <p>${escapeHtml(prod.long)}</p>
+            <div class="specs">
+              <strong>Tags:</strong> ${prod.tags.map(t=>`<span class="muted">#${escapeHtml(t)}</span>`).join(" ")}
+            </div>
+          </div>
+          <div style="margin-top:8px" class="row">
+            <button class="btn" id="pd-add" data-id="${prod.id}">Add to cart</button>
+            <a class="btn ghost" href="#products">Back to products</a>
+          </div>
+        </div>
+      `;
+      // Hook add to cart
+      query("#pd-add").addEventListener("click", ()=>{
+        addToCart(prod.id, 1);
+        trackEvent("product_add_from_details", { productId: prod.id });
+      });
+
+      // Navigate to product-details page
+      navigateTo("product-details");
+      if(pushHash) location.hash = `product-${prod.id}`;
+      // Announce
+      trackEvent("view_product", { productId: prod.id });
+    }
+
+    // ---------- Routing ----------
+    function navigateTo(route){
+      // Hide all pages, show requested
+      pages.forEach(s => s.classList.remove("active"));
+      const el = query("#" + route);
+      if(el){
+        el.classList.add("active");
+        // Move focus to main content area
+        el.querySelector("h2, h1, h3, form, [tabindex='0']")?.focus();
+      }
+      // Update nav aria-current
+      navLinks.forEach(a => {
+        const r = a.dataset.route;
+        if(r === route) a.setAttribute("aria-current","page");
+        else a.removeAttribute("aria-current");
+      });
+    }
+
+    // Interpret hash
+    function handleHash(){
+      const hash = location.hash.replace(/^#/,'');
+      if(!hash) return navigateTo("home");
+      // product route '#product-<id>'
+      const prodMatch = hash.match(/^product-(\d+)$/);
+      if(prodMatch) {
+        openProduct(Number(prodMatch[1]), false);
+        return;
+      }
+      // fallback to direct page ids
+      const valid = ["home","products","about","contact","checkout","thankyou","product-details"];
+      if(valid.includes(hash)) return navigateTo(hash);
+      // unknown -> home
+      navigateTo("home");
+    }
+
+    // ---------- Search & Sort ----------
+    function getFilteredProducts(){
+      const q = (searchInput.value || "").trim().toLowerCase();
+      let list = PRODUCTS.slice();
+      if(q){
+        list = list.filter(p => {
+          return p.name.toLowerCase().includes(q)
+            || p.short.toLowerCase().includes(q)
+            || p.long.toLowerCase().includes(q)
+            || p.tags.join(" ").toLowerCase().includes(q);
+        });
+      }
+      const sort = sortSelect.value;
+      if(sort === "low") list.sort((a,b)=>a.price - b.price);
+      else if(sort === "high") list.sort((a,b)=>b.price - a.price);
+      // default: as-is
+      return list;
+    }
+
+    // ---------- Events (delegation for dynamic content) ----------
+    function bindDelegatedEvents(){
+      // Product card buttons
+      document.body.addEventListener("click", (e) => {
+        const det = e.target.closest(".btn-details");
+        const add = e.target.closest(".btn-add");
+        if(det){
+          const id = det.dataset.id;
+          openProduct(id);
+        } else if(add){
+          const id = add.dataset.id;
+          addToCart(Number(id), 1);
+          trackEvent("add_to_cart_button", { productId: Number(id) });
+        }
+      });
+
+      // nav links: close default and route (hash will change and handleHash will run)
+      navLinks.forEach(a => a.addEventListener("click", (e)=>{
+        // allow default navigation via href (hash)
+        // But we set aria-current via navigateTo in handleHash
+      }));
+
+      // hash change
+      window.addEventListener("hashchange", handleHash);
+
+      // cart button: simple quick view and goto checkout
+      cartBtn.addEventListener("click", ()=>{
+        const cart = readCart();
+        const entries = Object.entries(cart);
+        if(entries.length === 0) {
+          alert("Your cart is empty.");
+          return;
+        }
+        // Build a simple summary and then goto checkout
+        let summary = "Cart summary:\\n";
+        let total = 0;
+        for(const [pid,qty] of entries){
+          const prod = PRODUCTS.find(p=>p.id===Number(pid));
+          if(!prod) continue;
+          summary += `${prod.name} x ${qty} = ${currency(prod.price * qty)}\\n`;
+          total += prod.price * qty;
+        }
+        summary += `\\nTotal: ${currency(total)}\\nProceed to checkout?`;
+        if(confirm(summary)){
+          location.hash = "checkout";
+        }
+      });
+
+      // Search & sort triggers
+      searchInput.addEventListener("input", debounce(()=> {
+        const list = getFilteredProducts();
+        populateGrids(list);
+      }, 220));
+
+      sortSelect.addEventListener("change", ()=> {
+        const list = getFilteredProducts();
+        populateGrids(list);
+      });
+
+      // Learn more button scrolls to features
+      query("#learn-more").addEventListener("click", ()=>{
+        alert("This demo uses hash-based routing (location.hash). Product details are dynamic and cart is stored in localStorage.");
+      });
+
+      // Checkout cancel
+      query("#checkout-cancel").addEventListener("click", ()=> {
+        location.hash = "products";
+      });
+
+      // Checkout form submit
+      query("#checkout-form").addEventListener("submit", (ev) => {
+        ev.preventDefault();
+        handleCheckout();
+      });
+
+      // Contact form submit
+      query("#contact-form").addEventListener("submit", (ev)=>{
+        ev.preventDefault();
+        handleContact();
+      });
+
+      // Product details: if user navigates to product page via link, openProduct will handle
+    }
+
+    // ---------- Checkout logic & validation ----------
+    function handleCheckout(){
+      const name = query("#c-name").value.trim();
+      const email = query("#c-email").value.trim();
+      const address = query("#c-address").value.trim();
+      const payment = query("#payment").value;
+
+      // clear previous errors
+      query("#err-name").textContent = "";
+      query("#err-email").textContent = "";
+      query("#err-address").textContent = "";
+      query("#err-payment").textContent = "";
+
+      let ok = true;
+      if(name.length < 3){ query("#err-name").textContent = "Please enter your full name."; ok = false; }
+      if(!/^\S+@\S+\.\S+$/.test(email)){ query("#err-email").textContent = "Please enter a valid email."; ok = false; }
+      if(address.length < 10){ query("#err-address").textContent = "Please enter a delivery address (min 10 chars)."; ok = false; }
+      if(!payment){ query("#err-payment").textContent = "Please choose a payment method."; ok = false; }
+
+      if(!ok) {
+        trackEvent("checkout_validation_failed", { name, email, address, payment });
+        return;
+      }
+
+      // Build order summary
+      const cart = readCart();
+      const items = [];
+      let total = 0;
+      for(const pid in cart){
+        const prod = PRODUCTS.find(p=>p.id===Number(pid));
+        if(!prod) continue;
+        const qty = Number(cart[pid]);
+        items.push({ id:prod.id, name:prod.name, qty, price:prod.price });
+        total += prod.price * qty;
+      }
+
+      if(items.length === 0){
+        alert("Cart is empty. Add some products before placing an order.");
+        location.hash = "products";
+        return;
+      }
+
+      // Simulate order placement
+      const orderId = "ORD" + Date.now().toString().slice(-6);
+      // Save (for demo, we only log)
+      console.info("Order placed:", { orderId, customer: {name,email,address,payment}, items, total });
+      trackEvent("order_placed", { orderId, total, items });
+
+      // Clear cart
+      clearCart();
+
+      // Show thank you with order id
+      query("#ty-order").textContent = `Order ID: ${orderId} · Total: ${currency(total)}`;
+      location.hash = "thankyou";
+    }
+
+    // ---------- Contact form handling ----------
+    function handleContact(){
+      const name = query("#ct-name").value.trim();
+      const email = query("#ct-email").value.trim();
+      const message = query("#ct-message").value.trim();
+      // reset
+      query("#ct-name-err").textContent = "";
+      query("#ct-email-err").textContent = "";
+      query("#ct-message-err").textContent = "";
+
+      let ok = true;
+      if(name.length < 2){ query("#ct-name-err").textContent = "Please enter your name."; ok = false; }
+      if(!/^\S+@\S+\.\S+$/.test(email)){ query("#ct-email-err").textContent = "Please enter a valid email."; ok = false; }
+      if(message.length < 10){ query("#ct-message-err").textContent = "Message must be at least 10 characters."; ok = false; }
+
+      if(!ok){
+        trackEvent("contact_validation_failed", { name, email });
+        return;
+      }
+
+      // Simulate send
+      query("#contact-success").textContent = "Thanks! Your message has been received (demo).";
+      trackEvent("contact_sent", { name, email });
+      // Clear inputs
+      query("#ct-name").value = "";
+      query("#ct-email").value = "";
+      query("#ct-message").value = "";
+    }
+
+    // ---------- Initialization ----------
+    function init(){
+      // Populate initial grids
+      populateGrids(PRODUCTS);
+
+      // Bind events
+      bindDelegatedEvents();
+
+      // Set up initial cart count
+      updateCartCount();
+
+      // Setup checkout summary live
+      updateCheckoutSummary();
+
+      // Show appropriate page based on hash
+      handleHash();
+
+      // When products list changes (search/sort), we still want card listeners to work (delegation handles it)
+    }
+
+    // Update checkout summary (populate from cart)
+    function updateCheckoutSummary(){
+      const cart = readCart();
+      const entries = Object.entries(cart);
+      if(entries.length === 0){
+        checkoutSummary.innerHTML = "<div class='muted'>Your cart is empty.</div>";
+        return;
+      }
+      let total = 0;
+      let html = "<strong>Items</strong><ul>";
+      for(const [pid,qty] of entries){
+        const prod = PRODUCTS.find(p=>p.id===Number(pid));
+        if(!prod) continue;
+        const itemTotal = prod.price * qty;
+        total += itemTotal;
+        html += `<li>${escapeHtml(prod.name)} x ${qty} — ${currency(itemTotal)}</li>`;
+      }
+      html += `</ul><div style="margin-top:8px"><strong>Total: ${currency(total)}</strong></div>`;
+      checkoutSummary.innerHTML = html;
+    }
+
+    // Rerender checkout summary when cart changes (observe localStorage via polling)
+    let lastCartSnapshot = JSON.stringify(readCart());
+    setInterval(()=> {
+      const current = JSON.stringify(readCart());
+      if(current !== lastCartSnapshot){
+        lastCartSnapshot = current;
+        updateCartCount();
+        updateCheckoutSummary();
+      }
+    }, 500);
+
+    // Re-populate grids when search input cleared via Escape key
+    searchInput.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape"){ searchInput.value = ""; populateGrids(PRODUCTS); }
+    });
+
+    // Debounce utility
+    function debounce(fn, wait=200){
+      let t;
+      return function(...args){ clearTimeout(t); t = setTimeout(()=> fn.apply(this,args), wait); };
+    }
+
+    // Simple HTML-escape safe renderer applied above
+
+    // Kick off
+    document.addEventListener("DOMContentLoaded", init);
+
+    // Expose small helpers for dev console (optional)
+    window.__cookiecart = {
+      PRODUCTS, readCart, addToCart, clearCart, openProduct, trackEvent
+    };
+
+    // Accessibility: ensure main element receives focus when routing
+    window.addEventListener("hashchange", () => {
+      const main = document.querySelector("main");
+      if(main) main.focus();
+      // After routing, we also want to update checkout summary (in case)
+      updateCheckoutSummary();
+    });
+
+    // Also handle initial hash on load (in case DOMContentLoaded fired earlier)
+    if(location.hash) {
+      setTimeout(handleHash, 50);
+    }
+  </script>
+</body>
+</html>
